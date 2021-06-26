@@ -8,3 +8,4 @@ print(x)
 
 y = kf.ops.collective.all_reduce_fn(x)
 print(y)
+print(torch.FloatTensor([1,2]))
