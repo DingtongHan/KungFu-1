@@ -108,7 +108,7 @@ func (s *monitorServer) Start(ip string, hl plan.HostList, clusterSize int, wait
 			if s.trainend[i] == 1 {
 				trainendflag = trainendflag + 1
 			}
-			if a := time.Now().Unix() - s.times[i]; a > int64(10) && s.times[i] != 0 {
+			if a := time.Now().Unix() - s.times[i]; a > int64(waitTime) && s.times[i] != 0 {
 				min := findmin(s.epochs)
 				s.DownFlag = true
 				s.Epochnum = min

@@ -110,7 +110,7 @@ func Main(args []string) {
 		if f.AutoRecover > 0 {
 			runner.MonitoredRun(ctx, localhostIPv4, initCluster, j, f.VerboseLog, f.Self, f.HostList, f.ClusterSize, f.AutoRecover)
 		} else {
-			runner.SimpleRun(ctx, localhostIPv4, initCluster, j, f.VerboseLog)
+			runner.SimpleRun(ctx, localhostIPv4, initCluster, j, f.VerboseLog, t0)
 		}
 	}
 }

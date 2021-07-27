@@ -16,7 +16,9 @@ import (
 )
 
 func MonitoredRun(ctx context.Context, selfIPv4 uint32, cluster plan.Cluster, j job.Job, verboseLog bool, selfIP string, hostList plan.HostList, clusterSize int, waitTime time.Duration) {
+	t1 := time.Now()
 	for {
+		t1 = time.Now()
 		if selfIP == "" {
 			selfIP = plan.FormatIPv4(selfIPv4)
 		}
@@ -31,6 +33,7 @@ func MonitoredRun(ctx context.Context, selfIPv4 uint32, cluster plan.Cluster, j 
 		var wg sync.WaitGroup
 		wg.Add(1)
 		go func() {
+			log.Infof("took %s", time.Since(t1))
 			d, err := utils.Measure(func() error { return local.RunAll(ctx, procs, verboseLog) })
 			log.Infof("all %d/%d local peers finished, took %s", len(procs), len(cluster.Workers), d)
 			if err != nil {
@@ -50,6 +53,7 @@ func MonitoredRun(ctx context.Context, selfIPv4 uint32, cluster plan.Cluster, j 
 			atomic.AddInt32(&successFinished, 1)
 		}
 		if Results.DownFlag {
+			t1 = time.Now()
 			atomic.AddInt32(&cont, 1)
 			cancel()
 			log.Infof("some machine down")
@@ -70,6 +74,5 @@ func MonitoredRun(ctx context.Context, selfIPv4 uint32, cluster plan.Cluster, j 
 			log.Infof("success finish")
 			break
 		}
-
 	}
 }

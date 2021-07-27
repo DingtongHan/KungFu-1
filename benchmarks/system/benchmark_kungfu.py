@@ -17,9 +17,9 @@ from kungfu.tensorflow.ops import current_cluster_size, current_rank
 from kungfu.tensorflow.v1.helpers import imagenet
 from tensorflow.keras import applications
 from tensorflow.python.util import deprecation
-
+from kungfu.cmd import monitor_batch_begin, monitor_batch_end, monitor_train_end, monitor_epoch_end
 deprecation._PRINT_DEPRECATION_WARNINGS = False
-
+tf.disable_v2_behavior()
 # Benchmark settings
 parser = argparse.ArgumentParser(
     description='TensorFlow Synthetic Benchmark',
@@ -72,7 +72,7 @@ parser.add_argument('--xla',
                     help='enable XLA')
 parser.add_argument('--data-dir', type=str, default='', help='dir to dataset')
 parser.add_argument('--file-pattern', type=str, default='train-*-of-*')
-
+parser.add_argument('--restart', type=int, default=0, help='restart')
 args = parser.parse_args()
 args.cuda = not args.no_cuda
 
@@ -192,31 +192,6 @@ def log_final_result(value, error):
     log_detailed_result(value, error, attrs)
 
 
-def run(benchmark_step):
-    # Warm-up
-    log('Running warmup...')
-    for x in range(args.num_warmup_batches):
-        time = timeit.timeit(benchmark_step, number=1)
-        img_sec = args.batch_size / time
-        log('Warmup Step #%d: %.1f img/sec per %s, took %.3fs' %
-            (x, img_sec, device, time))
-
-    # Benchmark
-    log('Running benchmark...')
-    img_secs = []
-    for x in range(args.num_iters):
-        time = timeit.timeit(benchmark_step, number=args.num_batches_per_iter)
-        img_sec = args.batch_size * args.num_batches_per_iter / time
-        log('Iter #%d: %.1f img/sec per %s' % (x, img_sec, device))
-        img_secs.append(img_sec)
-
-    # Results
-    img_sec_mean = np.mean(img_secs)
-    img_sec_conf = 1.96 * np.std(img_secs)
-    log('Img/sec per %s: %.1f +-%.1f' % (device, img_sec_mean, img_sec_conf))
-    log_final_result(img_sec_mean, img_sec_conf)
-
-
 loss = loss_function()
 train_opt = opt.minimize(loss)
 
@@ -237,6 +212,13 @@ else:
         if bcast_op:
             duration, _ = measure(lambda: session.run(bcast_op))
             log('bcast_op took %.3fs' % (duration))
-        run(lambda: session.run(train_opt))
+        for x in range(args.num_iters):
+            for y in range(args.num_batches_per_iter):
+                monitor_batch_begin()
+                print("come")
+                session.run(train_opt)
+                monitor_batch_end()
+            monitor_epoch_end()
         if barrier_op is not None:
             session.run(barrier_op)
+monitor_train_end()
