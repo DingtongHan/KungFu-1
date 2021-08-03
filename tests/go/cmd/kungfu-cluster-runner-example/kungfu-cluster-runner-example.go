@@ -80,7 +80,7 @@ func example(c *cluster, prog string, args []string) {
 		}
 	}
 
-	startWorker(2, 1)
+	startWorker(3, 1)
 
 	log.Infof("waiting all workers to stop")
 	workerGroup.Wait()

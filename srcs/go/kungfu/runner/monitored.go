@@ -15,13 +15,10 @@ import (
 	"github.com/lsds/KungFu/srcs/go/utils/runner/local"
 )
 
-func MonitoredRun(ctx context.Context, selfIPv4 uint32, cluster plan.Cluster, j job.Job, verboseLog bool, selfIP string, hostList plan.HostList, clusterSize int, waitTime time.Duration) {
+func MonitoredRun(ctx context.Context, selfIPv4 uint32, cluster plan.Cluster, j job.Job, verboseLog bool, hostList plan.HostList, clusterSize int, waitTime time.Duration) {
 	t1 := time.Now()
 	for {
 		t1 = time.Now()
-		if selfIP == "" {
-			selfIP = plan.FormatIPv4(selfIPv4)
-		}
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 		var successFinished int32
@@ -29,7 +26,7 @@ func MonitoredRun(ctx context.Context, selfIPv4 uint32, cluster plan.Cluster, j 
 		procs := j.CreateProcs(cluster, selfIPv4)
 		s := monitorserver.New(0)
 		log.Infof("will parallel run %d instances of %s with %q under monitor", len(procs), j.Prog, j.Args)
-		s.Monitor(selfIP, hostList, clusterSize, waitTime)
+		s.Monitor(selfIPv4, hostList, clusterSize, waitTime)
 		var wg sync.WaitGroup
 		wg.Add(1)
 		go func() {
@@ -67,6 +64,11 @@ func MonitoredRun(ctx context.Context, selfIPv4 uint32, cluster plan.Cluster, j 
 			}
 			j.Args = append(j.Args, "--restart")
 			j.Args = append(j.Args, "1")
+                        if Results.NewClusterFlag{
+                            cluster = Results.NewCluster
+                            clusterSize = Results.NewClusterSize
+                            hostList = Results.NewHL
+                        }
 			continue
 		}
 		wg.Wait()
